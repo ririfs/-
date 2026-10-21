@@ -1,0 +1,106 @@
+import sys
+import math
+
+def read_coefficient(name):
+    while True:
+        stroka = input(f"Введите {name}: ")
+        try:
+            value = float(stroka)
+        except ValueError:
+            print("Некорректное значение, повторите")
+            continue
+        return value
+
+
+def read_params():
+    a = None
+    if len(sys.argv) > 1:
+        try:
+            value = float(sys.argv[1])
+            if value != 0:
+                a = value
+        except ValueError:
+            pass
+    if a is None:
+        a = read_coefficient("A")
+
+    b = None
+    if len(sys.argv) > 2:
+        try:
+            b = float(sys.argv[2])
+        except ValueError:
+            pass
+    if b is None:
+        b = read_coefficient("B")
+
+    c = None
+    if len(sys.argv) > 3:
+        try:
+            c = float(sys.argv[3])
+        except ValueError:
+            pass
+    if c is None:
+        c = read_coefficient("C")
+
+    return a, b, c
+
+def list_roots_square(b,c):
+    if b == 0:
+        if c == 0:
+            print("Уравнение имеет бесконечно много решений (0 = 0).")
+            return []
+        else:
+            print("Уравнение не имеет решений.")
+            return []
+
+    right_square = -c / b  
+    if right_square < 0:
+        return []
+    if right_square == 0:
+        return [0.0]
+    r = math.sqrt(right_square)
+    return [r, -r]
+    
+def list_roots(a, b, c):
+    if a==0:
+        return list_roots_square(b,c)
+    d = b * b - 4 * a * c
+    roots = []
+    if d < 0:
+        return []
+    if d == 0:
+        t = -b / (2 * a)
+        if t < 0:
+            return []
+        if t == 0:
+            roots = [0.0]
+        else:
+            roots = [math.sqrt(t), -math.sqrt(t)]
+    else:
+        t1 = (-b - math.sqrt(d)) / (2 * a)
+        t2 = (-b + math.sqrt(d)) / (2 * a)
+        for t in (t1, t2):
+            if t < 0:
+                continue
+            if t == 0:
+                roots.append(0.0)
+            else:
+                roots.append(math.sqrt(t))
+                roots.append(-math.sqrt(t))
+
+    return list(set(roots))
+
+def print_roots(roots):
+    if not roots:
+        print("нет корней")
+    else:
+        print(roots)
+
+def main():
+    a, b, c = read_params()
+    roots = list_roots(a, b, c)
+    print_roots(roots)
+
+main()
+
+
