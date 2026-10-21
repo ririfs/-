@@ -1,0 +1,174 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <cmath>
+#include <set>
+
+class Coefficient {
+private:
+    std::string name;
+    int index;
+    double value;
+    bool readFromArgv(int argc, char* argv[], double& out) const {
+        if (argc <= index) {
+            return false;
+        }
+        try {
+            std::string s(argv[index]);
+            size_t pos;
+            double v = std::stod(s, &pos);
+            if (pos != s.size()) {
+                return false;
+            }
+            out = v;
+            return true;
+        } catch (const std::exception&) {
+            return false;
+        }
+    }
+
+    double readFromConsole() const {
+        while (true) {
+            std::cout << "Введите " << name << ": ";
+            std::string line;
+            std::getline(std::cin, line);
+            try {
+                size_t pos;
+                double v = std::stod(line, &pos);
+                if (pos != line.size()) {
+                    throw std::invalid_argument("trailing");
+                }
+                return v;
+            } catch (const std::exception&) {
+                std::cout << "Некорректное значение, повторите\n";
+            }
+        }
+    }
+
+public:
+    Coefficient(const std::string& n, int idx)
+        : name(n), index(idx), value(0.0) {}
+
+    void read(int argc, char* argv[]) {
+        double v;
+        if (readFromArgv(argc, argv, v)) {
+            value = v;
+        } else {
+            value = readFromConsole();
+        }
+    }
+
+    double getValue() const {
+        return value;
+    }
+};
+
+
+class BiquadraticEquation {
+private:
+    double a, b, c;
+    std::vector<double> solveSquare() const {
+        std::vector<double> roots;
+
+        if (b == 0) {
+            if (c == 0) {
+                std::cout << "Уравнение имеет бесконечно много решений (0 = 0).\n";
+            } else {
+                std::cout << "Уравнение не имеет решений.\n";
+            }
+            return roots;
+        }
+
+        double x_squared = -c / b;
+        if (x_squared < 0) {
+            return roots;
+        }
+        if (x_squared == 0) {
+            roots.push_back(0.0);
+            return roots;
+        }
+        double r = std::sqrt(x_squared);
+        roots.push_back(r);
+        roots.push_back(-r);
+        return roots;
+    }
+
+public:
+    BiquadraticEquation() : a(0), b(0), c(0) {}
+
+    void readCoefficients(int argc, char* argv[]) {
+        Coefficient coeffA("A", 1);
+        coeffA.read(argc, argv);
+        a = coeffA.getValue();
+
+        Coefficient coeffB("B", 2);
+        coeffB.read(argc, argv);
+        b = coeffB.getValue();
+
+        Coefficient coeffC("C", 3);
+        coeffC.read(argc, argv);
+        c = coeffC.getValue();
+    }
+
+    std::vector<double> solve() const {
+        if (a == 0) {
+            return solveSquare();
+        }
+        double d = b * b - 4 * a * c;
+        std::vector<double> roots;
+
+        if (d < 0) {
+            return {};
+        }
+
+        if (d == 0) {
+            double t = -b / (2 * a);
+            if (t < 0) {
+                return {};
+            }
+            if (t == 0) {
+                roots.push_back(0.0);
+            } else {
+                roots.push_back(std::sqrt(t));
+                roots.push_back(-std::sqrt(t));
+            }
+        } else {
+            double t1 = (-b - std::sqrt(d)) / (2 * a);
+            double t2 = (-b + std::sqrt(d)) / (2 * a);
+            for (double t : {t1, t2}) {
+                if (t < 0) continue;
+                if (t == 0) {
+                    roots.push_back(0.0);
+                } else {
+                    roots.push_back(std::sqrt(t));
+                    roots.push_back(-std::sqrt(t));
+                }
+            }
+        }
+
+        std::set<double> uniqueRoots(roots.begin(), roots.end());
+        return std::vector<double>(uniqueRoots.begin(), uniqueRoots.end());
+    }
+
+    void printRoots() const {
+        std::vector<double> roots = solve();
+        if (roots.empty()) {
+            std::cout << "нет корней\n";
+            return;
+        }
+        std::cout << "[";
+        for (size_t i = 0; i < roots.size(); ++i) {
+            if (i > 0) std::cout << ", ";
+            std::cout << roots[i];
+        }
+        std::cout << "]\n";
+    }
+};
+
+
+int main(int argc, char* argv[]) {
+    BiquadraticEquation eq;
+    eq.readCoefficients(argc, argv);
+    eq.printRoots();
+    return 0;
+}
